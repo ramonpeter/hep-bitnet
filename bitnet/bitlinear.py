@@ -1,6 +1,8 @@
 import torch
 from torch import Tensor, nn
 
+torch.manual_seed(6)
+
 
 class BitLinear(nn.Linear):
     """
@@ -22,14 +24,13 @@ class BitLinear(nn.Linear):
         super().__init__(in_features, out_features, bias)
         self.in_features = in_features
         self.out_features = out_features
-        self.eps = 1e-5
+        self.eps = 1e-8
         self.norm = nn.LayerNorm(in_features)
 
         # Quantiziation and dequantization
-        self.Q_b = 2 ** (b - 1) # use this to define quantized bit
+        self.Q_b = 2 ** (b - 1)  # use this to define quantized bit
         self.beta = torch.zeros((self.weight.shape[0], 1))
         self.gamma = torch.zeros((self.weight.shape[0], 1))
-        self.qdtype = torch.int8
 
     def ste(self, x):
         """
@@ -69,11 +70,12 @@ class BitLinear(nn.Linear):
         Returns:
             Tensor: Quantized activations tensor.
         """
-        quantized_x = torch.zeros_like(x)
-
         self.gamma = x.abs().max()
-        quantized_x = torch.clamp(x * self.Q_b / (self.gamma + self.eps), -self.Q_b + self.eps, self.Q_b - self.eps)
-        
+        quantized_x = torch.clamp(
+            x * self.Q_b / (self.gamma + self.eps),
+            -self.Q_b + self.eps,
+            self.Q_b - 1.0 - self.eps,
+        )
         return quantized_x
 
     def dequantize_activations(self, x):
@@ -115,8 +117,8 @@ class BitLinear(nn.Linear):
 
         # Return output
         return output
-    
-    
+
+
 class BitLinear158b(BitLinear):
     """
     BitLinear158b layer allowing for tertiar weights (-1,0,1). Rest is keeped
@@ -137,11 +139,14 @@ class BitLinear158b(BitLinear):
         b: int = 8,
     ):
         super().__init__(in_features, out_features, bias, b)
-    
+
     def _absmean_quantization(self, weight, gamma):
-        quantized_weight = torch.clamp(torch.round(weight / (gamma + self.eps)), min=-1, max=1)
+        quantized_weight = torch.clamp(
+            torch.round(weight / (gamma + self.eps)), min=-1, max=1
+        )
+        quantized_weight = (quantized_weight - weight).detach() + quantized_weight
         return quantized_weight
-        
+
     def binarize_weights(self):
         """
         Quantizes the weights using the absmean quantization function.
@@ -157,8 +162,12 @@ class BitLinear158b(BitLinear):
 
 if __name__ == "__main__":
     # Example usage
-    bitlinear = BitLinear158b(10, 6)
-    input_tensor = torch.randn(6, 10)  # Example input tensor
-    output = bitlinear(input_tensor)
-    print(output)  # Example output tensor
-    
+    bitlinear = BitLinear158b(3, 4)
+    bitlinear2 = BitLinear158b(4, 2)
+    input_tensor = torch.randn(2, 3, requires_grad=True)  # Example input tensor
+    output = bitlinear2(bitlinear(input_tensor)).sum()
+    # print(output)  # Example output tensor
+    output.backward()
+    # Access the gradients using x.grad
+    dx = input_tensor.grad
+    print("x.grad :", dx)
