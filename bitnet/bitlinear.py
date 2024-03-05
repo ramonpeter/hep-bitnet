@@ -144,7 +144,7 @@ class BitLinear158b(BitLinear):
         quantized_weight = torch.clamp(
             torch.round(weight / (gamma + self.eps)), min=-1, max=1
         )
-        quantized_weight = (quantized_weight - weight).detach() + quantized_weight
+        quantized_weight = (quantized_weight - weight).detach() + weight
         return quantized_weight
 
     def binarize_weights(self):
