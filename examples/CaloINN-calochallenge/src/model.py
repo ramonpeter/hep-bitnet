@@ -7,6 +7,8 @@ import FrEIA.modules as fm
 
 from myBlocks import *
 from vblinear import VBLinear
+from bitnet.bitlinear_opt import BitLinearOptimized as BitLinear
+
 
 import numpy as np
 
@@ -188,6 +190,7 @@ class CINN(nn.Module):
         self.log_cond = params.get("log_cond", False)
         self.use_norm = self.params.get("use_norm", False) and not self.params.get("use_extra_dim", False)
         self.pre_subnet = None
+        self.use_bitnet = params.get("use_bitnet", False)
 
         if self.bayesian:
             self.bayesian_layers = []
@@ -212,6 +215,8 @@ class CINN(nn.Module):
                 lays.append(VBLinear)
             if lay_params[n] == 'linear':
                 lays.append(nn.Linear)
+            if lay_params[n] == 'bitlinear':
+                lays.append(BitLinear)
         return lays
 
     def get_layer_args(self, params):
@@ -244,6 +249,8 @@ class CINN(nn.Module):
                         dicts["prior_prec"] = params["prior_prec"]
                     if "std_init" in params:
                         dicts["std_init"] = params["std_init"]
+                elif self.use_bitnet:
+                    layer_class.append(BitLinear)
                 else:
                     layer_class.append(nn.Linear)
                 layer_args.append(dicts)
