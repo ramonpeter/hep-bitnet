@@ -1,0 +1,67 @@
+e_ratio.pdf:
+    label: '\(E_{tot}/E_{part}\)'
+    func: calc_e_ratio
+
+e_ratio_log.pdf:
+    label: '\(E_{tot}\) (GeV)'
+    func: calc_e_ratio
+    x_log: True
+    range: [-3., 1.]
+
+e_detector.pdf:
+    label: '\(E_{tot}\) (GeV)'
+    func: calc_e_detector
+    n_bins: 49
+    y_log: True
+    range: [0., 120.]
+
+eta_diff_0_1.pdf:
+    label: '\(\left<\eta_1\right>-\left<\eta_0\right>\)'
+    func: calc_layer_diff
+    args: {'layer2': 1, 'dir': 'eta'}
+
+eta_diff_0_2.pdf:
+    label: '\(\left<\eta_2\right>-\left<\eta_0\right>\)'
+    func: calc_layer_diff
+    args: {'layer2': 2, 'dir': 'eta'}
+
+eta_diff_1_2.pdf:
+    label: '\(\left<\eta_2\right>-\left<\eta_1\right>\)'
+    func: calc_layer_diff
+    args: {'layer1': 1, 'layer2': 2, 'dir': 'eta'}
+
+phi_diff_0_1.pdf:
+    label: '\(\left<\phi_1\right>-\left<\phi_0\right>\)'
+    func: calc_layer_diff
+    args: {'layer2': 1, 'dir': 'phi'}
+
+phi_diff_0_2.pdf:
+    label: '\(\left<\phi_2\right>-\left<\phi_0\right>\)'
+    func: calc_layer_diff
+    args: {'layer2': 2, 'dir': 'phi'}
+
+phi_diff_1_2.pdf:
+    label: '\(\left<\phi_2\right>-\left<\phi_1\right>\)'
+    func: calc_layer_diff
+    args: {'layer1': 1, 'layer2': 2, 'dir': 'phi'}
+
+depth_weighted_tot_e.pdf:
+    label: 'lateral depth \(l_d\)'
+    func: calc_depth_weighted_total_energy
+    x_log: True
+    y_log: True
+    n_bins: 99
+    range: [0, 5.]
+
+depth_weighted_tot_e_normd.pdf:
+    label: 'shower depth \(s_d\)'
+    func: calc_depth_weighted_total_energy_normed
+    n_bins: 99
+    range: [0.4, 2.]
+
+depth_weighted_tot_e_normd_std.pdf:
+    label: 'shower depth width \(\sigma_{s_d}\)'
+    func: calc_depth_weighted_total_energy_std
+    n_bins: 99
+    range: [0., 0.9]
+
