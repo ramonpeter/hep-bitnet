@@ -52,7 +52,7 @@ class BitLinear(nn.Linear):
             Tensor: Binarized weights tensor.
         """
         alpha = self.weight.mean()
-        self.beta = self.weight.abs().mean()
+        self.beta = torch.maximum(self.weight.abs().mean(), torch.tensor(self.eps))
         binarized_weights = self.ste(self.weight - alpha)
 
         return binarized_weights
@@ -152,7 +152,7 @@ class BitLinear158b(BitLinear):
         Returns:
             Tensor: Quantized weight tensor.
         """
-        self.beta = self.weight.abs().mean()
+        self.beta = torch.maximum(self.weight.abs().mean(), torch.tensor(self.eps))
         binarized_weight = self._absmean_quantization(self.weight, self.beta)
 
         return binarized_weight
