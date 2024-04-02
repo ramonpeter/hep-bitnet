@@ -32,7 +32,7 @@ class BitLinearOptimized(nn.Linear):
 
         # Quantiziation and dequantization
         self.Q_b = 2 ** (b - 1)  # use this to define quantized bit
-        beta = torch.tensor(0.0, device=self.weight.device, dtype=self.weight.dtype)
+        beta = torch.tensor(self.eps, device=self.weight.device, dtype=self.weight.dtype)
         self.register_buffer('beta', beta)
         self.gamma = torch.tensor(0.0, device=self.weight.device, dtype=self.weight.dtype)
 
@@ -58,7 +58,7 @@ class BitLinearOptimized(nn.Linear):
             Tensor: Binarized weights tensor.
         """
         alpha = self.weight.mean()
-        self.beta = self.weight.abs().mean()
+        self.beta = torch.maximum(self.weight.abs().mean(), torch.tensor(self.eps))
         self.binarized_weight = self._ste(self.weight - alpha)
 
     def quantize_activations(self, x):
@@ -156,7 +156,7 @@ class BitLinear158bOptimized(BitLinearOptimized):
         Returns:
             Tensor: Quantized weight tensor.
         """
-        self.beta = self.weight.abs().mean()
+        self.beta = torch.maximum(self.weight.abs().mean(), torch.tensor(self.eps))
         self.binarized_weight = self._absmean_quantization(self.weight, self.beta)
 
 
