@@ -1,6 +1,6 @@
 cycler==0.11.0
 fonttools==4.33.3
-FrEIA==0.2
+#FrEIA==0.2
 h5py==3.7.0
 kiwisolver==1.4.2
 matplotlib==3.5.2
@@ -12,6 +12,6 @@ python-dateutil==2.8.2
 PyYAML==6.0
 scipy==1.8.1
 six==1.16.0
-torch==1.11.0
+pytorch==1.11.0
 typing_extensions==4.2.0
 pandas

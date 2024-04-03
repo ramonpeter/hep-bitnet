@@ -1,17 +1,18 @@
-run_name: caloINN_initial_test
+run_name: caloINN_initial_test_regular
 p_type: electron
 dtype: float32
 # Data
-data_path: /remote/gpu06/favaro/datasets/calo_challenge/piplus_data_1.hdf5
-val_data_path: /remote/gpu06/favaro/datasets/calo_challenge/piplus_data_1.hdf5
-xml_path: /remote/gpu06/favaro/datasets/calo_challenge/binning_dataset_1_pions.xml
+data_path: /groups/hephy/mlearning/CaloChallenge/data/official/dataset_2_1.hdf5
+val_data_path: /groups/hephy/mlearning/CaloChallenge/data/official/dataset_2_1.hdf5
+xml_path: /users/claudius.krause/HEP-BitNet/hep-bitnet/examples/CaloINN-calochallenge/binning_dataset_2.xml
+
 single_energy: null
 width_noise: 5.0e-6
 custom_noise: False
 val_frac: 0.01
 eps: 1.0e-10
-xml_ptype: "pion"
-eval_dataset: "1-pions"
+xml_ptype: "electron"
+eval_dataset: "2"
 u0up_cut: 3.5
 u0low_cut: 0.0
 pt_rew: 1.0
