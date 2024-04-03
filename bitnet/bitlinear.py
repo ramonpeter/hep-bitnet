@@ -27,8 +27,12 @@ class BitLinear(nn.Linear):
 
         # Quantiziation and dequantization
         self.Q_b = 2 ** (b - 1)  # use this to define quantized bit
-        self.beta = torch.tensor(0.0, device=self.weight.device, dtype=self.weight.dtype)
-        self.gamma = torch.tensor(0.0, device=self.weight.device, dtype=self.weight.dtype)
+        self.beta = torch.tensor(
+            0.0, device=self.weight.device, dtype=self.weight.dtype
+        )
+        self.gamma = torch.tensor(
+            0.0, device=self.weight.device, dtype=self.weight.dtype
+        )
 
     def ste(self, x):
         """

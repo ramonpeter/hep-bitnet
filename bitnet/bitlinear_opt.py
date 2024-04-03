@@ -2,7 +2,8 @@ import torch
 from torch import Tensor, nn
 
 torch.manual_seed(6)
-    
+
+
 class BitLinearOptimized(nn.Linear):
     """
     BitLinear is a custom linear layer that performs binarization of weights and quantization of activations
@@ -22,19 +23,23 @@ class BitLinearOptimized(nn.Linear):
     ):
         super().__init__(in_features, out_features, bias)
         self.eps = 1e-8
-        
+
         # Maybe put outside this one later?
         self.norm = nn.LayerNorm(in_features)
-        
+
         # register binarized_weight as buffer
         binarized_weight = torch.zeros_like(self.weight)
-        self.register_buffer('binarized_weight', binarized_weight)
+        self.register_buffer("binarized_weight", binarized_weight)
 
         # Quantiziation and dequantization
         self.Q_b = 2 ** (b - 1)  # use this to define quantized bit
-        beta = torch.tensor(self.eps, device=self.weight.device, dtype=self.weight.dtype)
-        self.register_buffer('beta', beta)
-        self.gamma = torch.tensor(0.0, device=self.weight.device, dtype=self.weight.dtype)
+        beta = torch.tensor(
+            self.eps, device=self.weight.device, dtype=self.weight.dtype
+        )
+        self.register_buffer("beta", beta)
+        self.gamma = torch.tensor(
+            0.0, device=self.weight.device, dtype=self.weight.dtype
+        )
 
     def _ste(self, x):
         """
@@ -92,7 +97,7 @@ class BitLinearOptimized(nn.Linear):
         """
         return x * self.gamma * self.beta / self.Q_b
 
-    def forward(self, x: Tensor, train: bool = True) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """
         Forward pass of the BitLinear layer.
 
@@ -120,7 +125,8 @@ class BitLinearOptimized(nn.Linear):
 
         # Return output
         return output
-    
+
+
 class BitLinear158bOptimized(BitLinearOptimized):
     """
     BitLinear158b layer allowing for tertiar weights (-1,0,1). Rest is keeped
