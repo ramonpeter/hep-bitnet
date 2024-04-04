@@ -7,8 +7,8 @@ import FrEIA.modules as fm
 
 from myBlocks import *
 from vblinear import VBLinear
-from bitnet.bitlinear_opt import BitLinearOptimized as BitLinear
-
+#from bitnet.bitlinear_opt import BitLinearOptimized as BitLinear
+from bitnet.bitlinear_orig import BitLinear158b as BitLinear
 
 import numpy as np
 
