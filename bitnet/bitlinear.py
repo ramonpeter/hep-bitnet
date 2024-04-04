@@ -27,8 +27,7 @@ class BitLinear(nn.Linear):
         self.dtype = self.weight.dtype
 
         # Quantiziation and dequantization
-        qb = 2 ** (b - 1) - 1.0  # 127 for 8-bit
-        self.Q_b = torch.tensor(qb, device=self.device, dtype=self.dtype)
+        self.Q_b = 2 ** (b - 1) - 1.0
         self.beta = torch.tensor(0.0, device=self.device, dtype=self.dtype)
         self.gamma = torch.tensor(0.0, device=self.device, dtype=self.dtype)
 
