@@ -1,17 +1,17 @@
 import torch
 from torch import Tensor, nn
-
-torch.manual_seed(6)
+import torch.nn.functional as F
 
 
 class BitLinear(nn.Linear):
     """
-    BitLinear is a custom linear layer that performs binarization of weights and quantization of activations
+    BitLinear is a custom linear layer that performs quantization of weights and activations
 
     Args:
         in_features (int): Number of input features.
         out_features (int): Number of output features.
         bias (bool, optional): If set to False, the layer will not learn an additive bias. Default is True.
+        b (int, optional): Number of bits for quantizatio. Defaults to 8.
     """
 
     def __init__(
@@ -23,45 +23,29 @@ class BitLinear(nn.Linear):
     ):
         super().__init__(in_features, out_features, bias)
         self.eps = 1e-8
-        self.norm = nn.LayerNorm(in_features)
+        self.device = self.weight.device
+        self.dtype = self.weight.dtype
 
         # Quantiziation and dequantization
-        self.Q_b = 2 ** (b - 1)  # use this to define quantized bit
-        self.beta = torch.tensor(
-            0.0, device=self.weight.device, dtype=self.weight.dtype
-        )
-        self.gamma = torch.tensor(
-            0.0, device=self.weight.device, dtype=self.weight.dtype
-        )
+        qb = 2 ** (b - 1) - 1.0  # 127 for 8-bit
+        self.Q_b = torch.tensor(qb, device=self.device, dtype=self.dtype)
+        self.beta = torch.tensor(0.0, device=self.device, dtype=self.dtype)
+        self.gamma = torch.tensor(0.0, device=self.device, dtype=self.dtype)
 
-    def ste(self, x):
+    def quantize_weights(self, w: Tensor) -> Tensor:
         """
-        Applies the sign function for binarization and uses Straight-Through Estimator (STE) during backward pass.
-
-        Args:
-            x (Tensor): Input tensor.
+        Quantizes the weights using the absmean quantization function.
 
         Returns:
-            Tensor: Binarized tensor.
+            Tensor: Quantized weight tensor.
         """
-        binarized_x = torch.sign(x)
-        binarized_x = (binarized_x - x).detach() + x
-        return binarized_x
+        alpha = w.mean()
+        self.beta = w.abs().mean().clamp_(min=self.eps)
+        quantized_weight = torch.sign(w - alpha)
 
-    def binarize_weights(self):
-        """
-        Binarizes the weights of the layer using STE.
+        return quantized_weight * self.beta
 
-        Returns:
-            Tensor: Binarized weights tensor.
-        """
-        alpha = self.weight.mean()
-        self.beta = torch.maximum(self.weight.abs().mean(), torch.tensor(self.eps))
-        binarized_weights = self.ste(self.weight - alpha)
-
-        return binarized_weights
-
-    def quantize_activations(self, x):
+    def quantize_activations(self, x: Tensor) -> Tensor:
         """
         Quantizes the activations of the layer.
 
@@ -72,25 +56,12 @@ class BitLinear(nn.Linear):
         Returns:
             Tensor: Quantized activations tensor.
         """
-        self.gamma = x.abs().max()
-        quantized_x = torch.clamp(
-            x * self.Q_b / (self.gamma + self.eps),
-            -self.Q_b + self.eps,
-            self.Q_b - 1.0 - self.eps,
+        self.gamma = self.Q_b / x.abs().max(dim=-1, keepdim=True).values.clamp_(
+            min=self.eps
         )
-        return quantized_x
+        quantized_x = (x * self.gamma).round().clamp_(-(self.Q_b + 1), self.Q_b)
 
-    def dequantize_activations(self, x):
-        """
-        Dequantizes the activations of the layer.
-
-        Args:
-            x (Tensor): Quantized input tensor.
-
-        Returns:
-            Tensor: Dequantized activations tensor.
-        """
-        return x * self.gamma * self.beta / self.Q_b
+        return quantized_x / self.gamma
 
     def forward(self, x: Tensor) -> Tensor:
         """
@@ -102,22 +73,19 @@ class BitLinear(nn.Linear):
         Returns:
             Tensor: Output tensor.
         """
-        # Normalize input
-        x = self.norm(x)
+        # weight tensor with shape (in_features, out_features)
+        w = self.weight
 
-        # Binarize weights and quantize activations
-        binarized_weights = self.binarize_weights()
+        # Quantize weights
+        w_quant = w + (self.quantize_weights(w) - w).detach()
 
         # Quantize input
-        x_quant = self.quantize_activations(x)
+        x_quant = x + (self.quantize_activations(x) - x).detach()
 
         # Perform linear transformation
-        output = torch.nn.functional.linear(x_quant, binarized_weights, self.bias)
+        output = F.linear(x_quant, w_quant, self.bias)
 
-        # Dequantize activations
-        output = self.dequantize_activations(output)
-
-        # Return output
+        # Return dequantized output
         return output
 
 
@@ -130,7 +98,7 @@ class BitLinear158b(BitLinear):
         in_features (int): Number of input features.
         out_features (int): Number of output features.
         bias (bool, optional): If set to False, the layer will not learn an additive bias. Default is True.
-        num_groups (int, optional): Number of groups to divide the weights and activations into. Default is 1.
+        b (int, optional): Number of bits for quantizatio. Defaults to 8.
     """
 
     def __init__(
@@ -142,34 +110,14 @@ class BitLinear158b(BitLinear):
     ):
         super().__init__(in_features, out_features, bias, b)
 
-    def _absmean_quantization(self, weight, gamma):
-        quantized_weight = torch.clamp(
-            torch.round(weight / (gamma + self.eps)), min=-1, max=1
-        )
-        quantized_weight = (quantized_weight - weight).detach() + weight
-        return quantized_weight
-
-    def binarize_weights(self):
+    def quantize_weights(self, w: Tensor):
         """
         Quantizes the weights using the absmean quantization function.
 
         Returns:
             Tensor: Quantized weight tensor.
         """
-        self.beta = torch.maximum(self.weight.abs().mean(), torch.tensor(self.eps))
-        binarized_weight = self._absmean_quantization(self.weight, self.beta)
+        self.beta = w.abs().mean().clamp_(min=self.eps)
+        quantized_weight = (w / self.beta).round().clamp_(-1, 1)
 
-        return binarized_weight
-
-
-if __name__ == "__main__":
-    # Example usage
-    bitlinear = BitLinear(3, 4)
-    bitlinear2 = BitLinear(4, 2)
-    input_tensor = torch.randn(2, 3, requires_grad=True)  # Example input tensor
-    output = bitlinear2(bitlinear(input_tensor)).sum()
-    # print(output)  # Example output tensor
-    output.backward()
-    # Access the gradients using x.grad
-    dx = input_tensor.grad
-    print("x.grad :", dx)
+        return quantized_weight * self.beta

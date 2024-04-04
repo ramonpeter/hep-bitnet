@@ -8,8 +8,8 @@ with open("README.md", "r") as fh:
 requirements = ["numpy", "pandas", "scipy", "tables", "torch", "torchtestcase", "matplotlib", "vegas"]
 
 setup(
-    name="bithep",
-    version="2.0.0",
+    name="bitnet",
+    version="0.4.0",
     author="Claudius Krause, Daohan Wang, Ramon Winterhalder",
     author_email="ramon.winterhalder@uclouvain.be",
     description="1-Bit networks for HEP applications",
