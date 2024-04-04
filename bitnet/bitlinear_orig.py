@@ -61,9 +61,9 @@ class BitLinear(nn.Linear):
         self.gamma = self.Q_b / x.abs().max(dim=-1, keepdim=True).values.clamp_(
             min=self.eps
         )
-        quantized_x = (x / self.gamma).round().clamp_(-(self.Q_b + 1), self.Q_b)
+        quantized_x = (x * self.gamma).round().clamp_(-(self.Q_b + 1), self.Q_b)
 
-        return quantized_x * self.gamma
+        return quantized_x / self.gamma
 
     def forward(self, x: Tensor) -> Tensor:
         """

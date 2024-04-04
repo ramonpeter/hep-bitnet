@@ -1,8 +1,6 @@
 import torch
 from torch import Tensor, nn
 
-torch.manual_seed(6)
-
 
 class BitLinear(nn.Linear):
     """
