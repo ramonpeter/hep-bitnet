@@ -16,7 +16,7 @@ class Subnet(nn.Module):
     """ This class constructs a subnet for the coupling blocks """
 
     def __init__(self, num_layers, size_in, size_out, internal_size=None, dropout=0.0,
-                 layer_class=nn.Linear, layer_args={}):
+                 layer_class=nn.Linear, layer_args={}, layer_norm=None, layer_act='nn.ReLU'):
         """
             Initializes subnet class.
 
@@ -45,8 +45,12 @@ class Subnet(nn.Module):
             if dropout > 0:
                 self.layer_list.append(nn.Dropout(p=dropout))
 
+            if layer_norm is not None:
+                self.layer_list.append(eval(layer_norm)(output_dim))
+
             #self.layer_list.append(nn.BatchNorm1d(output_dim))
-            self.layer_list.append(nn.LeakyReLU()) ###nn.SiLU()) ###########
+            #self.layer_list.append(nn.LeakyReLU()) ###nn.SiLU()) ###########
+            self.layer_list.append(eval(layer_act)())
         
         # separating last linear/VBL layer
         #output_dim = size_out
@@ -267,7 +271,9 @@ class CINN(nn.Module):
                     internal_size = params.get("internal_size"),
                     dropout = params.get("dropout", 0.),
                     layer_class = layer_class,
-                    layer_args = layer_args)
+                    layer_args = layer_args,
+                    layer_norm = params.get("layer_norm", None),
+                    layer_act = params.get("layer_act", "relu"),)
             if self.bayesian:
                 self.bayesian_layers.extend(
                     layer for layer in subnet.layer_list if isinstance(layer, VBLinear))
@@ -375,7 +381,7 @@ class CINN(nn.Module):
                            }
  
         for i in range(self.params.get("n_blocks", 10)):
-            if self.params.get("norm", True): # i!=0:
+            if self.params.get("norm", True) and i!=0:
                 nodes.append(
                     ff.Node(
                         [nodes[-1].out0],
