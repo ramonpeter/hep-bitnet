@@ -41,6 +41,8 @@ permute_soft: False
 permute_layer: False
 num_bins: 10
 dropout: 0.0
+layer_norm: nn.BatchNorm1d
+layer_act: nn.SiLU
 bayesian: False
 prior_prec: 5000
 std_init: -15.0

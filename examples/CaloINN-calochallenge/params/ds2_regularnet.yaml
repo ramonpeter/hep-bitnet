@@ -7,16 +7,12 @@ val_data_path: /groups/hephy/mlearning/CaloChallenge/data/official/dataset_2_2.h
 xml_path: /users/claudius.krause/HEP-BitNet/hep-bitnet/examples/CaloINN-calochallenge/binning_dataset_2.xml
 
 single_energy: null
-width_noise: 5.0e-6
+width_noise: 1.0e-6
 custom_noise: False
-val_frac: 0.01
+val_frac: 0.1
 eps: 1.0e-10
 xml_ptype: "electron"
 eval_dataset: "2"
-u0up_cut: 3.5
-u0low_cut: 0.0
-pt_rew: 1.0
-dep_cut: 600
 
 # Training
 lr: 1.e-5
@@ -37,7 +33,7 @@ n_blocks: 14
 internal_size: 256
 layers_per_block: 3
 coupling_type: cubic
-bounds_init: 18
+bounds_init: 15
 permute_soft: False
 permute_layer: False
 num_bins: 10
