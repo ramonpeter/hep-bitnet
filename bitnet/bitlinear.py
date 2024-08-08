@@ -213,7 +213,6 @@ class VBBitLinear(VBLinear):
 
         if self.random is None:
             self.random = torch.randn_like(self.logsig2_w)
-        s2_w = logsig2_w.exp()
 
         # Quantize full weight
         w = self.mu_w + s2_w.sqrt() * self.random
