@@ -22,8 +22,9 @@ This project provides a **P-DAT-Bit** model for quark–gluon classification. Bu
    - Captures global context of the entire jet.
 
 4. **BitLinear Replacement**  
-   - All linear layers inside the Particle and Channel Attention blocks are replaced by **BitLinear** layers.  
+   - All linear layers inside the Particle and Channel Attention blocks are replaced by **BitLinear158b** layers.  
    - Reduces numeric precision for weights, striking a balance between efficiency and classification accuracy.
+   - To revert to the original full-precision model, simply replace all **BitLinear158b** layers with **nn.Linear** layers.
 
 5. **Classification Head**  
    - After the attention blocks, features are concatenated and passed through a 1D convolution, global pooling, and an MLP (with final softmax) for binary classification (quark vs. gluon).
