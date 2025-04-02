@@ -17,5 +17,5 @@ ml cuda/12.0.0
 
 export TF_ENABLE_ONEDNN_OPTS=0
 
-python3 /users/daohan.wang/SMEFTNet/train_regression.py --epochs 300 --prefix eft_wz_regressed   --config regress_wz_v0 --dRN 0.4 --conv_params "( (0.0, [20, 20]), (0.0, [20, 20]) )" --readout_params "(0.0, [32, 32])"
+python3 /users/daohan.wang/SMEFTNet/train_regression.py --overwrite --epochs 300 --prefix eft_wz_regressed   --config regress_wz_v0 --dRN 0.4 --conv_params "( (0.0, [20, 20]), (0.0, [20, 20]) )" --readout_params "(0.0, [32, 32])"
 
