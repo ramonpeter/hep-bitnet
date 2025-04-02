@@ -47,8 +47,16 @@ This project provides a **P-DAT-Bit** model for quark–gluon classification. Bu
 4. **Chunk Loading**  
    - Large data (particle pairs, jet interactions) can exceed memory if loaded at once.  
    - This project uses a batch-wise (“chunk”) loading process, loading only a portion of data each step, then releasing memory before proceeding.
+  
+5. ## Data Preparation Notebook
+   - The file quark-gluon_data_preparation.ipynb contains all preprocessing code used to convert the raw .npz files into model-ready files.
+For full preprocessing details and physics motivations, please refer to the original publication.
 
 ---
+
+
+
+
 
 ## Training & Testing
 
