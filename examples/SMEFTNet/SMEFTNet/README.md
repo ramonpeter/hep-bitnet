@@ -1,6 +1,6 @@
 # SMEFTNet Regression Task
 
-This repository provides code to train and test **SMEFTNet** (and its quantized variant **SMEFTNet-Bit**) for a regression task. The primary goal is to estimate the decay plane angle \(\phi_{\text{decay}}^\text{jet}\) from particle-level jet information in simulated \(\PW\PZ\) events. For background details and additional context, please see the discussion in [Ref.~\cite{Chatterjee:2024pbp}](#background-information) (provided below).
+This repository provides code to train and test **SMEFTNet** (and its quantized variant **SMEFTNet-Bit**) for a regression task. The primary goal is to estimate the decay plane angle from particle-level jet information in simulated WZ events. For background details and additional context, please see the discussion in [Ref.~\cite{Chatterjee:2024pbp}].
 
 ## Getting Started
 
@@ -58,4 +58,3 @@ This flexibility allows you to experiment with different trade-offs between mode
 
 ---
 
-**Contact**: For any questions or issues, please open a GitHub issue or contact the repository owner directly.
