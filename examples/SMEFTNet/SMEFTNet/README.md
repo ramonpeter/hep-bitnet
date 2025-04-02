@@ -1,73 +1,61 @@
-# Higgs ML Uncertainty Challenge -- HEPHY
+# SMEFTNet Regression Task
 
-## Hardware
+This repository provides code to train and test **SMEFTNet** (and its quantized variant **SMEFTNet-Bit**) for a regression task. The primary goal is to estimate the decay plane angle \(\phi_{\text{decay}}^\text{jet}\) from particle-level jet information in simulated \(\PW\PZ\) events. For background details and additional context, please see the discussion in [Ref.~\cite{Chatterjee:2024pbp}](#background-information) (provided below).
 
-CPU model: Intel(R) Xeon(R) Gold 6138 CPU @ 2.00GHz
-Architecture: x86\_64
-number of CPU cores: 1
-memory: 20GB
-GPU: not needed
+## Getting Started
 
-Minimum requirements:
-number of CPU cores: 1
-memory: 20GB
-GPU: not needed
+### Repository Structure
 
-## OS
+- **`train_regression.py`**  
+  Python script to train the SMEFTNet or SMEFTNet-Bit model for the regression task.
+  
+- **`test_regression.py`**  
+  Python script to evaluate a trained model on test data.
 
-CentOS Linux 7
+- **`NN/models/`**  
+  Directory where model weights are saved after every training epoch.
 
-## 3rd-party software and environment setup
+- **`SMEFT.sbatch`**  
+  Example SLURM batch script demonstrating how to run the training and testing jobs on an HPC cluster, including how to specify command-line arguments.
 
-TensorFlow: `pip install tensorflow`
-imunuit: `pip install iminuit`
+- **`SMEFTNet.py`**  
+  The original SMEFTNet model architecture, featuring standard linear layers.
 
-To ensure a consistent environment, we recommend using **Conda**. You can create the required environment using:
+- **`SMEFTNet-Bit.py`**  
+  A variant of SMEFTNet where certain (or all) linear layers are replaced by BitLinear layers. Within this file, you can specify which parts of the network should be quantized:
+  - **MPNN block only** (Message Passing Neural Network component)
+  - **MLP layers only** (feed-forward component)
+  - **All linear layers** in the entire model
 
-```bash
-conda env create -f environment.yml
-conda activate uncertainty_challenge_new
-```
+## Running the Code
 
+1. **Train the model**  
+   ```bash
+   python3 train_regression.py
+   ```
+   This command will initialize the SMEFTNet (or SMEFTNet-Bit, depending on how you configure it) and begin training. Model weights are saved to `NN/models` after every epoch.
 
-## ML models
+2. **Test the model**  
+   ```bash
+   python3 test_regression.py
+   ```
+   This command loads the saved model weights from `NN/models` and evaluates performance on the test dataset.
 
-There are two models: 
-- TensorFlow multiclassifier (TFMC)
-- Parametric neural network (PNN)
+3. **Using the SLURM batch script**  
+   An example SLURM script, `SMEFT.sbatch`, is included to show how to submit training or testing jobs to a high-performance computing cluster. You can edit the parameters and relevant variables to suit your environment.
 
-### Training
+## Notes on SMEFTNet vs. SMEFTNet-Bit
 
-The models are pre-trained, so no training needed.
+- **SMEFTNet**: The standard model architecture with floating-point linear layers.  
+- **SMEFTNet-Bit**: A quantized version with BitLinear layers, offering potential memory and computational efficiency at the cost of reduced precision.
 
+In `SMEFTNet-Bit.py`, you can choose to quantize:
+- All linear layers (complete quantization),
+- Only the MLP layers (about 70% of weights),
+- Or just the MPNN block layers (about 30% of weights).
 
-### Inference
+This flexibility allows you to experiment with different trade-offs between model size, inference speed, and performance accuracy.
 
-The TFMC and PNN are used together to infer the interval of the signal strength. The evaluation is performed in the `model.py`, with the input of a config file `configs/config_submission.yaml`.
+---
 
-#### Config files
-
-The config file `configs/config_submission.yaml` is hardcoded in `model.py`. The important sections are the following:
-
-- `Tasks`: This specifies which tasks to run, including multiclassifier and the parametric neural network for all the processes. This section should not be changed.
-- `Selections`: The framework applies selections (defined in `common/selections.py`) on events to categorize them into different regions. This specifies which regions to use in the signal strength inference.
-- `CSI`: This sets whether to use cubic spline interpolation for inclusive cross section. It should not be changed.
-- `MultiClassifier/htautau/ztautau/ttbar/diboson`: The ML architechture and model paths for each regions are set in these sections. Different files are provided for different tasks. For multiclassifier, `model_path` and `calibration` are provided, the `calibration` is optional. For PNN in different processes, the inclusive cross section parametrization file `icp_file` and `model_path` are provided.
-
-#### Trained models
-
-The trained models are stored in `models/*Task*/*selection*/*specifics*/`. The `*Task*`, `*selection*`, and `*specifics*` are explained below:
-- `Task`: The `Tasks` in the config file, includes `MultiClassifier`, `htautau`, `ztautau`, `ttbar`, and `diboson`.
-- `selection`: The `Selections` in the config file, includes `lowMT_VBFJet`, `lowMT_noVBFJet_ptH100`, and `highMT_VBFJet`.
-- `specifics`: The stored files includes the trained model path (`model_path`), calibration files for multiclassifier (`calibration`), and inclusive cross section parametrization file (`icp_file`).
-
-In addition, the `CSI` files for training data is used as well in the prediction. Those files are saved in `data/tmp_data/`.
-
-## Side effects
-
-- Running `predict.py` produces a `results.json` under the `SUBMISSION_DIR` provided in the arguments. The json file will be overwritten if the file already exists.
-
-## Key assumptions
-
-- The framework applies selections on the data before processing it. The selections are defined in `common/selections.py`. A set of selections can be used when infering the signal strength, as specified in `configs/config_submission.yaml`. When running the framework, it assumes non-zero events from all selections.
-- The script `predict.py` should be run under the main directory.
+**Contact**: For any questions or issues, please open a GitHub issue or contact the repository owner directly.
