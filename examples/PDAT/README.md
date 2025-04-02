@@ -66,8 +66,6 @@ This project provides a **P-DAT-Bit** model for quark–gluon classification. Bu
   ```
   - Loads the trained weights to evaluate on the test set.  
 
----
-
 ## References
 
 1. **P-DAT**: M. He et al., *Quark/gluon discrimination and top tagging with dual attention transformer*, Eur. Phys. J. C **83**:1116 (2023).  
