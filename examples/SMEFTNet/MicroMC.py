@@ -66,8 +66,8 @@ def getModels( models ):
 
 from sklearn.model_selection import train_test_split
 def getEvents( signal, background, nTraining, test_size=None, train_size=None, ret_sig_bkg=False):
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+    #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu')
     pt_sig, angles_sig = sample(signal, nTraining)
     pt_bkg, angles_bkg = sample(background, nTraining)
 

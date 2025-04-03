@@ -13,9 +13,160 @@ from torch_geometric.nn import MessagePassing
 
 import sys
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+from torch import Tensor, nn
+import torch.nn.functional as F
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#device = torch.device('cpu')
 from torch_geometric.nn import MLP
+
+class BitLinear(nn.Linear):
+    """
+    BitLinear is a custom linear layer that performs quantization of weights and activations
+
+    Args:
+        in_features (int): Number of input features.
+        out_features (int): Number of output features.
+        bias (bool, optional): If set to False, the layer will not learn an additive bias. Default is True.
+        b (int, optional): Number of bits for quantizatio. Defaults to 8.
+    """
+
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        bias: bool = True,
+        b: int = 8,
+    ):
+        super().__init__(in_features, out_features, bias)
+        self.eps = 1e-8
+        self.device = self.weight.device
+        self.dtype = self.weight.dtype
+
+        # Quantiziation and dequantization
+        self.Q_b = 2 ** (b - 1) - 1.0
+        self.beta = torch.tensor(0.0, device=self.device, dtype=self.dtype)
+        self.gamma = torch.tensor(0.0, device=self.device, dtype=self.dtype)
+
+    def quantize_weights(self, w: Tensor) -> Tensor:
+        """
+        Quantizes the weights using the absmean quantization function.
+
+        Returns:
+            Tensor: Quantized weight tensor.
+        """
+        alpha = w.mean()
+        self.beta = w.abs().mean().clamp_(min=self.eps)
+        quantized_weight = torch.sign(w - alpha)
+
+        return quantized_weight * self.beta
+
+    def quantize_activations(self, x: Tensor) -> Tensor:
+        """
+        Quantizes the activations of the layer.
+
+        Args:
+            x (Tensor): Input tensor.
+            b (int, optional): Number of bits for quantization. Default is 8.
+
+        Returns:
+            Tensor: Quantized activations tensor.
+        """
+        self.gamma = self.Q_b / x.abs().max(dim=-1, keepdim=True).values.clamp_(
+            min=self.eps
+        )
+        quantized_x = (x * self.gamma).round().clamp_(-(self.Q_b + 1), self.Q_b)
+
+        return quantized_x / self.gamma
+
+    def forward(self, x: Tensor) -> Tensor:
+        """
+        Forward pass of the BitLinear layer.
+
+        Args:
+            x (Tensor): Input tensor.
+
+        Returns:
+            Tensor: Output tensor.
+        """
+        # weight tensor with shape (in_features, out_features)
+        w = self.weight
+
+        # Quantize weights
+        w_quant = w + (self.quantize_weights(w) - w).detach()
+
+        # Quantize input
+        x_quant = x + (self.quantize_activations(x) - x).detach()
+
+        # Perform linear transformation
+        output = F.linear(x_quant, w_quant, self.bias)
+
+        # Return dequantized output
+        return output
+
+
+class BitLinear158b(BitLinear):
+    """
+    BitLinear158b layer allowing for tertiar weights (-1,0,1). Rest is keeped
+    as in BitLinear
+
+    Args:
+        in_features (int): Number of input features.
+        out_features (int): Number of output features.
+        bias (bool, optional): If set to False, the layer will not learn an additive bias. Default is True.
+        b (int, optional): Number of bits for quantizatio. Defaults to 8.
+    """
+
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        bias: bool = True,
+        b: int = 8,
+    ):
+        super().__init__(in_features, out_features, bias, b)
+
+    def quantize_weights(self, w: Tensor):
+        """
+        Quantizes the weights using the absmean quantization function.
+
+        Returns:
+            Tensor: Quantized weight tensor.
+        """
+        self.beta = w.abs().mean().clamp_(min=self.eps)
+        quantized_weight = (w / self.beta).round().clamp_(-1, 1)
+
+        return quantized_weight * self.beta
+        
+class CMLP(nn.Module):
+    def __init__(self, layer_sizes, dropout=0.0, activation='ReLU', batch_norm=False):
+        super(CMLP, self).__init__()
+        self.layers = nn.ModuleList()
+
+        activations = {
+            'ReLU': nn.ReLU(),
+            'leakyrelu': nn.LeakyReLU(negative_slope=0.01),
+            'Sigmoid': nn.Sigmoid(),
+            'Tanh': nn.Tanh(),
+        }
+        activation_function = activations[activation]
+
+        for i in range(len(layer_sizes) - 1):
+            self.layers.append(BitLinear158b(layer_sizes[i], layer_sizes[i + 1]))
+           
+            if batch_norm and i < len(layer_sizes) - 2: 
+                self.layers.append(nn.BatchNorm1d(layer_sizes[i + 1]))
+           
+            if i < len(layer_sizes) - 2: 
+                self.layers.append(activation_function)
+               
+            if dropout > 0:
+                self.layers.append(nn.Dropout(dropout))
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
 
 ### alternative
 #from collections import OrderedDict
@@ -201,13 +352,13 @@ class SMEFTNet(torch.nn.Module):
             hidden_layers_ = copy.deepcopy(hidden_layers)
             hidden_layers_[-1]+=1 # separate output for gamma-coordinate 
             if l==0:
-                _mlp = MLP([3*(1+num_features) + 2 ]+hidden_layers_, dropout=dropout, act="LeakyRelu")
-                _mlp.act.negative_slope = negative_slope
+                _mlp = MLP([3*(1+num_features) + 2 ]+hidden_layers_, dropout=dropout, activation="leakyrelu")
+                #_mlp.act.negative_slope = negative_slope
                 # only include features in radius in the first layer
                 self.EC.append( EIRCGNN( _mlp, dRN=dRN, include_features_in_radius=include_features_in_radius ) )
             else:
-                _mlp = MLP([3*conv_params[l-1][1][-1]+2]+hidden_layers_,dropout=dropout, act="LeakyRelu")
-                _mlp.act.negative_slope = negative_slope
+                _mlp = MLP([3*conv_params[l-1][1][-1]+2]+hidden_layers_,dropout=dropout, activation="leakyrelu")
+                #_mlp.act.negative_slope = negative_slope
                 self.EC.append( EIRCGNN( _mlp, dRN=dRN ) ) 
 
         if len(self.EC)>0:
@@ -220,8 +371,8 @@ class SMEFTNet(torch.nn.Module):
             # the case where we do not have a gNN
             EC_out_chn = 0
 
-        self.mlp = MLP( [EC_out_chn+self.num_scalar_features]+readout_params[1]+[num_classes], dropout=readout_params[0], act="LeakyRelu",batch_norm=self.readout_batch_norm)
-        self.mlp.act.negative_slope = negative_slope
+        self.mlp = MLP( [EC_out_chn+self.num_scalar_features]+readout_params[1]+[num_classes], dropout=readout_params[0], activation="leakyrelu",batch_norm=self.readout_batch_norm)
+       # self.mlp.act.negative_slope = negative_slope
 
         if not self.regression:
             self.out = torch.nn.Sigmoid()
@@ -326,7 +477,7 @@ if __name__=="__main__":
         args.prefix+="_LFP"
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+    #device = torch.device('cpu')
     # reproducibility
     torch.manual_seed(0)
     import numpy as np

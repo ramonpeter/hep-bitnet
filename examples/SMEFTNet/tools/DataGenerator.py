@@ -42,6 +42,7 @@ class DataGenerator(Sequence):
             max_files           = None,
             verbose             = False,
             shuffle             = False,
+            random_seed         = None,
                 ):
         '''
         DataGenerator for the keras training framework.
@@ -64,6 +65,10 @@ class DataGenerator(Sequence):
                 raise RuntimeError( "Don't know what to do with %r" % filename )
 
         self.input_files = self.input_files[:max_files]
+
+        if random_seed is not None:
+            np.random.seed(random_seed)
+            random.seed(random_seed)
 
         random.shuffle( self.input_files )
 
