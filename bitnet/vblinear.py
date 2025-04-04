@@ -1,8 +1,8 @@
 import math
-import sys
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
 
 class VBLinear(nn.Module):
@@ -28,7 +28,7 @@ class VBLinear(nn.Module):
                         (maximum-a-posteriori)
             std_init: Logarithm of the initial standard deviation of the weights
         """
-        super(VBLinear, self).__init__()
+        super().__init__()
         self.n_in = in_features
         self.n_out = out_features
         self.map = enable_map
