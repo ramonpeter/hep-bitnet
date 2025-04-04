@@ -1,7 +1,9 @@
-#import os
-#__path__.append(os.path.dirname(os.path.abspath(__file__)))
-import sys, os
+# import os
+# __path__.append(os.path.dirname(os.path.abspath(__file__)))
+import os
+import sys
+
 _path = os.path.dirname(os.path.abspath(__file__))
-#print (_path)
-sys.path.insert( 0, _path)
-sys.path.insert( 0,'/'.join(_path.split('/')[:-1]))
+# print (_path)
+sys.path.insert(0, _path)
+sys.path.insert(0, "/".join(_path.split("/")[:-1]))
