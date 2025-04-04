@@ -24,7 +24,7 @@ You can install by cloning the repository and do pip install
 # clone the repository
 git clone https://github.com/ramonpeter/hep-bitnet
 # then install (add '-e' for dev mode)
-cd bitnet
+cd hep-bitnet
 pip install (-e) .
 ```
 
