@@ -1,51 +1,33 @@
-# ELSA: Enhanced Latent SpAces for improved collider simulations
+# BitHEP — The Limits of Low-Precision ML in HEP
 
+<p align="center">
+<a href="https://arxiv.org/abs/2504.????"><img alt="Arxiv" src="https://img.shields.io/badge/arXiv-2504.12345-b31b1b.svg"></a>
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+<a href="https://pytorch.org"><img alt="pytorch" src="https://img.shields.io/badge/PyTorch-2.0-DC583A.svg?style=flat&logo=pytorch"></a>
+</p>
 
-[![arXiv](http://img.shields.io/badge/arXiv-2305.xxxx-B31B1B.svg)](https://arxiv.org/abs/23??)
+> Official code for [BitHEP — The Limits of Low-Precision ML in HEP](https://arxiv.org/abs/2504.????)  
+by Claudius Krause, Daohan Wang, Ramon Winterhalder.
 
-## Introduction
+This repo contains a PyTorch implementation of the BitLinear layer as proposed in these papers:
 
-This repo contains the code for the **E**nhanced **L**atent **S**p**A**ces (ELSA) framework
-for neural network improved collider simulations. It is based on the LaSeR protocol [[1]](#laser) and
-further employs augmented flows [[2]](#survae). The code is provided in PyTorch. 
+- [BitNet: Scaling 1-bit Transformers for Large Language Models](2310.11453)
+- [The Era of 1-bit LLMs: All Large Language Models are in 1.58 Bits](https://arxiv.org/abs/2402.17764)
+
+It also contains all examples shown in our paper.
 
 ## Installation
 
-### Dependencies
-
-**Package**     | **Version**
-----------------|-------------------------------------------------
-Python          | >= 3.7
-Torch           | >= 1.8
-Numpy           | >= 1.20.0 
-
-
-### Download + Install
+You can install by cloning the repository and do pip install
 
 ```sh
 # clone the repository
-git clone https://github.com/ramonpeter/elsa.git
-# then install in dev mode
-cd elsa
-python setup.py develop
+git clone https://github.com/ramonpeter/hep-bitnet
+# then install (add '-e' for dev mode)
+cd bitnet
+pip install (-e) .
 ```
 
-### Prepare datasets
+## Experiments
 
-In order to download the datasets
-
-```bash
-./get_datasets.sh
-```
-   
-This prepares and/or downloads the datasets into the **datasets** folder.
-
-
-
-## References 
-
-<a name="laser">[1]</a> Latent Space Refinement: [2106.00792](https://arxiv.org/abs/2106.00792)
-   - Code: [https://github.com/ramonpeter/LaSeR](https://github.com/ramonpeter/LaSeR)
-
-<a name="survae">[2]</a> SurVAE Flows: [2007.02731](https://arxiv.org/abs/2007.02731)
-   - Code [https://github.com/didriknielsen/survae_flows](https://github.com/didriknielsen/survae_flows)
+Details about the performed experiments can be found in the subfolder `examples`
