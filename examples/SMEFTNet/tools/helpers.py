@@ -1,63 +1,84 @@
-import   numpy as np
-import   ROOT
-import   array
+import array
+
+import numpy as np
+import ROOT
 import torch
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def clip_quantile( features, quantile, weights = None, return_selection=False):
 
-    selected  = torch.arange(len(features)).to(device)
-    selection = (torch.ones_like( selected ) > 0).to(device)
+def clip_quantile(features, quantile, weights=None, return_selection=False):
+
+    selected = torch.arange(len(features)).to(device)
+    selection = (torch.ones_like(selected) > 0).to(device)
 
     for i_feature in range(len(features[0])):
-        selection&= 1==torch.bucketize( features[:, i_feature], torch.quantile( features[:, i_feature], torch.tensor( (quantile, 1.-quantile) ).to(device) ) )
+        selection &= 1 == torch.bucketize(
+            features[:, i_feature],
+            torch.quantile(
+                features[:, i_feature],
+                torch.tensor((quantile, 1.0 - quantile)).to(device),
+            ),
+        )
 
     if return_selection:
         return selection
 
-    #len_before = len(selected)
+    # len_before = len(selected)
     selected = selected[selection]
-    #print( "Autoclean efficiency of %3.2f: %3.2f"%(args.auto_clean, np.count_nonzero( selection )/len_before) )
+    # print( "Autoclean efficiency of %3.2f: %3.2f"%(args.auto_clean, np.count_nonzero( selection )/len_before) )
     return_features = features[selected]
     if weights is not None:
-        if type(weights)==type({}):
-            return_weights = {k:weights[k][selected] for k in weights.keys()}
+        if type(weights) == type({}):
+            return_weights = {k: weights[k][selected] for k in weights.keys()}
         else:
-            return_weights = weights[selected] 
+            return_weights = weights[selected]
         return return_features, return_weights
     else:
         return return_features
 
-def make_TH1F( h, ignore_binning = False):
+
+def make_TH1F(h, ignore_binning=False):
     # remove infs from thresholds
     vals, thrs = h
     if ignore_binning:
-        histo = ROOT.TH1F("h","h",len(vals),0,len(vals))
+        histo = ROOT.TH1F("h", "h", len(vals), 0, len(vals))
     else:
-        histo = ROOT.TH1F("h","h",len(thrs)-1,array.array('d', thrs))
+        histo = ROOT.TH1F("h", "h", len(thrs) - 1, array.array("d", thrs))
     for i_v, v in enumerate(vals):
-        if v<float('inf'): # NAN protection
-            histo.SetBinContent(i_v+1, v)
+        if v < float("inf"):  # NAN protection
+            histo.SetBinContent(i_v + 1, v)
     return histo
 
-def make_TH2F( h, ignore_binning = False):
+
+def make_TH2F(h, ignore_binning=False):
     # remove infs from thresholds
     vals, thrs_x, thrs_y = h
     if ignore_binning:
-        histo = ROOT.TH2F("h","h",len(vals[0]),0,len(vals[0]),len(vals),0,len(vals))
+        histo = ROOT.TH2F(
+            "h", "h", len(vals[0]), 0, len(vals[0]), len(vals), 0, len(vals)
+        )
     else:
-        histo = ROOT.TH2F("h","h",len(thrs_x)-1,array.array('d', thrs_x),len(thrs_y)-1,array.array('d', thrs_y))
+        histo = ROOT.TH2F(
+            "h",
+            "h",
+            len(thrs_x) - 1,
+            array.array("d", thrs_x),
+            len(thrs_y) - 1,
+            array.array("d", thrs_y),
+        )
     for iy, _ in enumerate(vals):
         for ix, v in enumerate(vals[iy]):
-            if v<float('inf'): # NAN protection
+            if v < float("inf"):  # NAN protection
                 histo.SetBinContent(histo.FindBin(thrs_x[ix], thrs_y[iy]), v)
     return histo
 
+
 # https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy
-def weighted_quantile(values, quantiles, sample_weight=None,
-                      values_sorted=False, old_style=False):
-    """ Very close to numpy.percentile, but supports weights.
+def weighted_quantile(
+    values, quantiles, sample_weight=None, values_sorted=False, old_style=False
+):
+    """Very close to numpy.percentile, but supports weights.
     NOTE: quantiles should be in [0, 1]!
     :param values: numpy.array with data
     :param quantiles: array-like with many quantiles needed
@@ -73,8 +94,9 @@ def weighted_quantile(values, quantiles, sample_weight=None,
     if sample_weight is None:
         sample_weight = np.ones(len(values))
     sample_weight = np.array(sample_weight)
-    assert np.all(quantiles >= 0) and np.all(quantiles <= 1), \
-        'quantiles should be in [0, 1]'
+    assert np.all(quantiles >= 0) and np.all(
+        quantiles <= 1
+    ), "quantiles should be in [0, 1]"
 
     if not values_sorted:
         sorter = np.argsort(values)
@@ -90,10 +112,16 @@ def weighted_quantile(values, quantiles, sample_weight=None,
         weighted_quantiles /= np.sum(sample_weight)
     return np.interp(quantiles, weighted_quantiles, values)
 
-import os, shutil
-def copyIndexPHP( directory ):
-    ''' Copy index.php to directory
-    '''
-    index_php = os.path.join( directory, 'index.php' )
-    if not os.path.exists( directory ): os.makedirs( directory )
-    shutil.copyfile( os.path.join(os.path.dirname(__file__), 'scripts/php/index.php'), index_php )
+
+import os
+import shutil
+
+
+def copyIndexPHP(directory):
+    """Copy index.php to directory"""
+    index_php = os.path.join(directory, "index.php")
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    shutil.copyfile(
+        os.path.join(os.path.dirname(__file__), "scripts/php/index.php"), index_php
+    )
