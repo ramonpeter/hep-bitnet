@@ -1,0 +1,103 @@
+run_name: d3_shape_AR_500_slow
+dtype: float32
+
+# Data
+hdf5_file: /remote/gpu06/favaro/datasets/calo_challenge/dataset_3_1_full.hdf5
+eval_hdf5_file: /remote/gpu06/favaro/datasets/calo_challenge/dataset_3_2_full.hdf5
+xml_filename: /remote/gpu02/ore/calo_dreamer/src/challenge_files/binning_dataset_3.xml
+val_frac: 0.1
+eps: 1.0e-10
+particle_type: electron
+eval_dataset: "3"
+eval_cut: 15.15e-3
+shape: [45, 1, 50, 18]
+
+transforms:
+    NormalizeByElayer:
+        ptype: /remote/gpu02/ore/calo_dreamer/src/challenge_files/binning_dataset_3.xml
+        xml_file: electron
+    SelectiveUniformNoise:
+        noise_width: 5.0e-6
+        cut: True
+        exclusions: [-45, -44, -43, -42, -41, -40, -39, -38, -37,
+                     -36, -35, -34, -33, -32, -31, -30, -29, -28,
+                     -27, -26, -25, -24, -23, -22, -21, -20, -19,
+                     -18, -17, -16, -15, -14, -13, -12, -11, -10,
+                      -9,  -8,  -7,  -6,  -5,  -4,  -3,  -2,  -1]
+    ExclusiveLogitTransform:
+        delta: 1.0e-6
+        exclusions: [-45]
+    StandardizeFromFile: {}
+    LogEnergy: {}
+    ScaleEnergy:
+        e_min: 6.907755
+        e_max: 13.815510
+    AddFeaturesToCond:
+        split_index: 40500
+    Reshape:
+        shape: [45, 1, 50, 18]
+
+# Model
+model_type: shape
+model: TransfusionAR
+network: ARtransformer_shape
+condition_dim: 46
+dim_embedding: 256
+n_head: 4
+n_encoder_layers: 4
+n_decoder_layers: 4
+dim_feedforward: 512
+normalization: LayerNorm
+# dropout_transformer: 0.05
+x_embed: conv
+x_embed_kernel: [4,2]
+x_embed_stride: [2,2]
+x_embed_channels: 2
+subnet:
+    class: UNet
+    params:
+        dim: 2
+        cylindrical: True
+        condition_dim: 256 # match dim_embedding
+        level_channels: [64, 64, 128]
+        level_kernels: [[7,3], [4,2]]
+        level_strides: [[5,3], [2,2]]  # (50, 18) -> (10, 6) -> (5, 3)
+        # level_kernels: [[4,2], [7,3]]
+        # level_strides: [[2,2], [5,3]]    # (50, 18) -> (25, 9) -> (5, 3)
+        encode_t: True
+        encode_t_dim: 100
+        # encode_c: True
+        # encode_c_dim: 100
+        break_dims: [3]
+
+# Secondary models
+energy_model: /remote/gpu06/favaro/temp/calodream_models/d2_energy_model_AR
+
+# Training
+lr: 1.e-3
+max_lr: 5.e-4
+batch_size: 300
+validate_every: 5
+use_scheduler: True
+lr_scheduler: one_cycle_lr
+weight_decay: 0.01
+betas: [0.9, 0.999]
+n_epochs: 500
+cycle_epochs: 500
+cycle_pct_start: 0.3
+save_periodically: True
+save_every: 50
+sample_periodically: False
+sample_every: 10
+sample_every_n_samples: 1001
+clip_gradients_to: 1.0
+
+# Evaluation
+eval_mode: all
+# n_samples: 100000
+# batch_size_sample: 10000
+sample_us: True
+solver_kwargs:
+    method: rk4
+    options:
+        step_size: 0.02

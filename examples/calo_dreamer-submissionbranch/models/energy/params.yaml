@@ -1,0 +1,46 @@
+run_name: energy_model
+dtype: float32
+
+# Data
+eval_dataset: "2"
+shape: [45]
+
+# Preprocessing
+transforms:
+    ScaleVoxels:
+        factor: 0.35
+    NormalizeByElayer:
+        ptype: electron
+        xml_file: challenge_files/binning_dataset_2.xml
+    SelectDims:
+        start: -45
+        end: 0
+    ExclusiveLogitTransform:
+        delta: 1.0e-6
+        rescale: True
+    StandardizeFromFile: {}
+    LogEnergy: {}
+    ScaleEnergy:
+        e_min: 6.907755
+        e_max: 13.815510
+    Reshape:
+        shape: [45, 1]
+
+# Model
+model_type: energy
+model: TransfusionAR
+network: ARtransformer
+dim_embedding: 64
+n_head: 4
+n_encoder_layers: 4
+n_decoder_layers: 4
+dim_feedforward: 512
+n_con: 1
+conditional: True
+normalization: LayerNorm
+
+# Sampling
+solver_kwargs:
+    method: rk4
+    options:
+        step_size: 0.02

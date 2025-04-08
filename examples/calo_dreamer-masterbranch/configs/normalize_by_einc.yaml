@@ -1,0 +1,45 @@
+run_name: test_calo_dreamer
+p_type: photon
+dtype: float32
+# Data
+hdf5_file: /remote/gpu06/favaro/datasets/calo_challenge/gamma_data_1.hdf5
+xml_filename: /remote/gpu06/favaro/datasets/calo_challenge/binning_dataset_1_photons.xml
+width_noise: 5.0e-6
+val_frac: 0.2
+eps: 1.0e-10
+particle_type: "photon"
+eval_dataset: "1-photons"
+transforms: {
+ NormalizeByEinc: {},
+ AddNoise: {noise_width: 5.0e-6, cut: False}
+}
+
+# Training
+lr: 1.e-5
+max_lr: 1.e-4
+batch_size: 256
+validate_every: 100
+use_scheduler: True
+lr_scheduler: one_cycle_lr
+weight_decay: 0.01
+betas: [0.9, 0.999]
+n_epochs: 1
+cycle_epochs: 50
+save_interval: 100
+
+# Sampling
+sample_periodically: True
+sample_every: 100
+sample_every_n_samples: 100
+
+# ResNet block
+intermediate_dim: 256
+n_blocks: 1
+dim: 373
+n_con: 1
+layers_per_block: 3
+conditional: True
+
+# Additional params
+alpha: 1.0e-8
+alpha_logit: 1.0e-6

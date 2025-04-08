@@ -1,0 +1,67 @@
+run_name: test_calo_dreamer
+out_dir: /remote/gpu05/palacios/calo_dreamer/results/test_calo_dreamer
+p_type: photon
+dtype: float32
+# Data
+hdf5_file: /remote/gpu05/palacios/calo_dreamer/datasets/calo_challenge/gamma_data_1.hdf5
+xml_filename: /remote/gpu05/palacios/calo_dreamer/datasets/calo_challenge/binning_dataset_1_photons.xml
+single_energy: null
+width_noise: 5.0e-6
+custom_noise: False
+val_frac: 0.2
+eps: 1.0e-10
+particle_type: "photon"
+eval_dataset: "1-photons"
+u0up_cut: 3.0
+u0low_cut: 0.0
+pt_rew: 0.7
+transforms: {
+ NormalizeByElayer: {ptype: /remote/gpu05/palacios/calo_dreamer/datasets/calo_challenge/binning_dataset_1_photons.xml, xml_file: photon},
+ AddNoise: {noise_width: 5.0e-6}
+}
+
+# Training
+lr: 1.e-4
+max_lr: 1.e-3
+batch_size: 8192
+validate_every: 100
+
+use_scheduler: True
+lr_scheduler: one_cycle_lr
+
+weight_decay: 0.01
+betas: [0.9, 0.999]
+n_epochs: 1
+cycle_epochs: 1
+save_interval: 100
+
+## Architecture
+#n_blocks: 12
+#internal_size: 256
+#layers_per_block: 3
+#coupling_type: cubic
+#bounds_init: 15
+#permute_soft: False
+#permute_layer: False
+#num_bins: 10
+#dropout: 0.0
+#bayesian: False
+#prior_prec: 5000
+#std_init: -15.0
+
+# ResNet block
+intermediate_dim: 256
+n_blocks: 1
+dim: 373
+n_con: 1
+layers_per_block: 8
+conditional: True
+
+sub_layers: [linear, linear, linear]
+norm: True
+# Preprocessing
+use_extra_dims: True
+use_norm: False
+log_cond: True
+alpha: 1.0e-8
+alpha_logit: 1.0e-6

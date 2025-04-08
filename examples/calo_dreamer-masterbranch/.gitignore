@@ -1,0 +1,12 @@
+/venv/
+/runs/
+/log/
+/results/
+/.idea
+/params
+/log/
+.DS_Store
+*.ipynb
+**__pycache__
+*.xml
+*.hdf5

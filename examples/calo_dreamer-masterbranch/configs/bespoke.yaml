@@ -1,0 +1,31 @@
+run_name: BespokeMidpoint_4_dlt
+dtype: float32
+
+# Data
+shape: [1, 45, 16, 9]
+
+# Solver
+model: BespokeNonStationary
+num_steps: 16 # number of integration steps (NFE varies with base solver)
+truth_kwargs: # setting for the dopri5 'truth' solver
+  method: dopri5
+    #options:
+    #step_size: 0.01
+  atol: 1.e-5 # dopri
+  rtol: 1.e-5 # dopri
+
+# Flow model
+shape_model: /remote/gpu06/favaro/temp/calodream_models/d2_shape_model_ViT_full_data_wrescale_submission
+
+# Training
+loss: lte
+iterations: 3500
+batch_size: 500
+lr: 5.e-4
+loss_window: 3500
+checkpoint_grads: False
+
+# Evaluation
+batch_size_sample: 10000
+n_batches_sample: 10
+eval_mode: all

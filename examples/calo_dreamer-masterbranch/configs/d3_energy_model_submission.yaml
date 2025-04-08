@@ -1,0 +1,61 @@
+run_name: d3_energy_model_AR_logit_full
+dtype: float32
+
+# Model
+model_type: energy
+model: TransfusionAR
+network: ARtransformer
+
+# Data
+hdf5_file: /remote/gpu06/favaro/datasets/calo_challenge/dataset_3_1_full.hdf5
+eval_hdf5_file: /remote/gpu06/favaro/datasets/calo_challenge/dataset_3_2_full.hdf5
+xml_filename: /remote/gpu06/favaro/datasets/calo_challenge/binning_dataset_3.xml
+val_frac: 0.00001
+eps: 1.0e-10
+particle_type: electron
+eval_dataset: "3"
+
+transforms: {
+    #ScaleVoxels: {factor: 0.35},
+    NormalizeByElayer: {
+      ptype: /remote/gpu06/favaro/datasets/calo_challenge/binning_dataset_3.xml,
+      xml_file: electron
+    },
+    ScaleTotalEnergy: {factor: 0.35},
+    SelectDims: {start: -45, end: 0},
+    ExclusiveLogitTransform: {delta: 1.0e-6, rescale: True},
+    StandardizeFromFile: {model_dir: ''},
+    LogEnergy: {},
+    ScaleEnergy: {e_min: 6.907755, e_max: 13.815510},
+    Reshape: {shape: [45, 1]}
+}
+
+# Training
+lr: 1.e-3
+max_lr: 2.e-3
+batch_size: 4000
+validate_every: 5
+use_scheduler: True
+lr_scheduler: one_cycle_lr
+#weight_decay: 1.0e-6
+betas: [0.9, 0.999]
+n_epochs: 500
+cycle_epochs: 500
+cycle_pct_start: 0.1
+save_interval: 100_001
+
+# Sampling
+sample_periodically: False
+sample_every: 10
+sample_every_n_samples: 1001
+solver_kwargs: {method: rk4, options: {step_size: 0.02}}
+
+shape: [45] # number of calorimeter layers
+dim_embedding: 64
+n_head: 4
+n_encoder_layers: 4
+n_decoder_layers: 4
+dim_feedforward: 512
+n_con: 1
+conditional: True
+normalization: LayerNorm

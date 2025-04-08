@@ -1,0 +1,61 @@
+run_name: photon_energy_model
+dtype: float32
+
+# Model
+model_type: energy
+
+# Data
+hdf5_file: /data/projects/punim0011/aore/CaloChallenge/1/dataset_1_photons_1.hdf5
+eval_hdf5_file: /data/projects/punim0011/aore/CaloChallenge/1/dataset_1_photons_2.hdf5
+xml_filename: /home/aore/calo_dreamer/src/challenge_files/binning_dataset_1_photons.xml
+val_frac: 0.2
+eps: 1.0e-10
+particle_type: "photon"
+eval_dataset: "1-photons"
+transforms: {
+    NormalizeByElayer: {
+        ptype: /home/aore/calo_dreamer/src/challenge_files/binning_dataset_1_photons.xml,
+        xml_file: photon
+    },
+    SelectDims: {start: -5, end: 0},
+    ExclusiveLogitTransform: {delta: 1.0e-6, exclusions: [-5]},
+    StandardizeFromFile: {},
+    LogEnergy: {},
+    ScaleEnergy: {e_min: 5.545177, e_max: 15.249238},
+}
+
+# Training
+lr: 1.e-3
+max_lr: 1.e-3
+batch_size: 1000
+validate_every: 1
+use_scheduler: True
+lr_scheduler: one_cycle_lr 
+weight_decay: 0.01
+betas: [0.9, 0.999]
+n_epochs: 3000
+cycle_epochs: 3000
+cycle_pct_start: 0.1
+save_interval: 100_001
+
+# Sampling
+sample_periodically: False
+sample_every: 4001
+sample_every_n_samples: 1000
+solver_kwargs: {method: midpoint, options: {step_size: 0.01}}
+
+network: Resnet
+shape: [5] # number of calorimeter layers
+
+# ResNet block
+intermediate_dim: 256
+n_blocks: 8
+n_con: 1
+layers_per_block: 2
+
+conditional: True
+encode_t: True
+encode_t_dim: 32
+encode_c: True
+encode_c_dim: 32
+normalization: LayerNorm

@@ -1,0 +1,85 @@
+run_name: d2_energy_model_AR_full
+dtype: float32
+
+# Data
+hdf5_file: /remote/gpu05/palacios/calo_dreamer/datasets/calo_challenge/dataset_2_1.hdf5
+eval_hdf5_file: /remote/gpu05/palacios/calo_dreamer/datasets/calo_challenge/dataset_2_2.hdf5
+xml_filename: /remote/gpu02/ore/calo_dreamer/src/challenge_files/binning_dataset_2.xml
+val_frac: 0.00001
+eps: 1.0e-10
+particle_type: electron
+eval_dataset: "2"
+
+# Preprocessing
+transforms:
+    #ScaleVoxels:
+    #    factor: 0.35
+    NormalizeByElayer:
+        ptype: /remote/gpu02/ore/calo_dreamer/src/challenge_files/binning_dataset_2.xml
+        xml_file: electron
+    ScaleTotalEnergy: 
+        factor: 0.35
+    SelectDims:
+        start: -45
+        end: 0
+    ExclusiveLogitTransform:
+        delta: 1.0e-6
+        rescale: True
+    StandardizeFromFile: {}
+    LogEnergy: {}
+    ScaleEnergy:
+        e_min: 6.907755
+        e_max: 13.815510
+    Reshape:
+        shape: [45, 1]
+
+# Model
+model_type: energy
+model: TransfusionAR
+network: ARtransformer
+shape: [45] # number of calorimeter layers
+dim_embedding: 64
+n_head: 4
+n_encoder_layers: 4
+n_decoder_layers: 4
+dim_feedforward: 512
+#encode_c_dim: 64
+n_con: 1
+conditional: True
+#c_embed: True
+#x_embed: True
+#conditional: True
+#encode_t: True
+#encode_t_dim: 64
+#encode_c: True
+normalization: LayerNorm
+
+# Training
+lr: 1.e-3
+max_lr: 2.e-3
+batch_size: 4000
+validate_every: 5
+use_scheduler: True
+lr_scheduler: one_cycle_lr
+# weight_decay: 0.001
+betas: [0.9, 0.999]
+n_epochs: 500
+cycle_epochs: 500
+save_interval: 100_001
+sample_periodically: False
+sample_every: 10
+sample_every_n_samples: 1001
+
+# Evaluation
+eval_mode: all
+n_samples: 100000
+batch_size_sample: 10000
+sample_us: True
+solver_kwargs:
+    # method: dopri5
+    # atol: 1.e-4
+    # rtol: 1.e-6
+    method: rk4
+    options:
+        step_size: 0.02
+
